@@ -1,5 +1,6 @@
 #ifndef SRC_S21_MATH_H_
 #define SRC_S21_MATH_H_
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +16,7 @@
 #define s21_N_NAN -0.0 / 0.0
 #define s21_MAX_double 1.7976931348623157e308
 #define s21_IS_NAN(x) (x != x)
-// long double s21_replace(double x);
+long double s21_replace(double x);
 int s21_abs(int x);
 long double s21_pow(double x, double y);
 long double s21_fabs(double x);

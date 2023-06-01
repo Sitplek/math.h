@@ -1,5 +1,5 @@
 #include "s21_math.h"
-// эпсилент числа
+//  вычисляет экспоненту числа x с помощью рядовой формулы, рядами Тэйлора.
 long double s21_exp(double x) {
   long double rez = 1, y = 1, i = 1;
   int flag = 0;

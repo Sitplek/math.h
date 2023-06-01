@@ -1,5 +1,6 @@
 #include "s21_math.h"
-// приводим число к синусу через ряды тейлора. счет в радианы
+// работа со значениями углов в радианах, которые могут выходить за пределы
+// диапазона от -π до π.
 long double awdawd(double x) {
   while (x > s21_PI || x < -s21_PI) {
     x += x > s21_PI ? -2 * s21_PI : 2 * s21_PI;
@@ -7,6 +8,7 @@ long double awdawd(double x) {
   return x;
 }
 
+// вычеслять син числа x с помощью рядовой формулы, рядами Тэйлора.
 long double s21_sin(double x) {
   x = awdawd(x);
   long double y = x, rez = x;

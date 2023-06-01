@@ -7,13 +7,11 @@ long double s21_fmod(double x, double y) {
     f = 1;
     res = s21_fabs(res);
   }
-  if (y == 0) {
-    res = s21_INF;
-  } else {
-    if (res != y) {
-      while (s21_fabs(res) >= s21_fabs(y)) res = s21_fabs(res) - s21_fabs(y);
-    } else
-      res = 0.0;
-  }
+
+  if (res != y) {
+    while (s21_fabs(res) >= s21_fabs(y)) res = s21_fabs(res) - s21_fabs(y);
+  } else
+    res = 0.0;
+
   return (f) ? -res : res;
 }

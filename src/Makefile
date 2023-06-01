@@ -1,69 +1,61 @@
-TEST = all_tests
-LIB = s21_math.a
-
-HEADER = s21_string.h 
-
-OBJ = $(patsubst %.c, %.o, $(SRC))
-OBJ_TEST = $(patsubst %.c, %.o, $(SRC_TEST))
-COVER_GCNO = $(patsubst %.o, %.gcno, $(OBJ) $(OBJ_TEST))
-COVER_GCDA = $(patsubst %.o, %.gcda, $(OBJ) $(OBJ_TEST))
 CC = gcc
-SRC =	s21_abs.c s21_ceil.c s21_cos.c s21_fabs.c s21_floor.c \
-		s21_fmod.c s21_pow.c s21_sin.c s21_exp.c s21_log.c \
-		s21_tan.c s21_sqrt.c s21_asin.c s21_acos.c s21_atan.c
-	
-SRC_TEST = s21_math_test.c
-CFLAGS := -Wall -Werror -Wextra -I. -std=c11
-LDFLAGS = -lcheck
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S), Linux)
-	LDFLAGS += -lsubunit -lm -lpthread -lrt
-endif
+STDFLAGS = -Wall -Werror -Wextra -std=c11
+GCOV_FLAGS=-fprofile-arcs -ftest-coverage
+LINUX_FLAGS=-lsubunit -lrt -lpthread -lm
+
+SRC=$(wildcard *.c)
+OBJ=$(patsubst %.c,%.o, ${SRC})
+
+OS := $(shell uname -s)
 
 ifeq ($(OS),Linux)
   OPEN_CMD = xdg-open
 endif
 ifeq ($(OS),Darwin)
-  OPEN_CMD = open
+	OPEN_CMD = open
 endif
 
-.PHONY: all, clean, test, s21_math.a, gcov_report
+TEST_SRC=$(wildcard ./tests//s21_*.c)
+LIBS=-lcheck
 
-all: clean s21_math.a test
+all : s21_math.a test
 
-s21_math.a: $(OBJ)
-	ar rcs $(LIB) $?
-	ranlib $(LIB)
+s21_math.a: ${SRC}
+	$(CC) -c $(STDFLAGS) $(SRC)
+	ar rc $@ $(OBJ)
+	ranlib $@
+	cp $@ lib$@
+	make clean_obj
 
-%.o: %.c $(HEADER)
-	$(CC) $(СFLAGS) -c $< -o $@ $(LDFLAGS)
+test : s21_math.a
+ifeq ($(OS), Darwin)
+	${CC} $(STDFLAGS) ${TEST_SRC} $< -o unit_test $(LIBS) -lm
+else
+	${CC} $(STDFLAGS) ${TEST_SRC} $< -o unit_test $(LIBS) $(LINUX_FLAGS)
+endif
+	./unit_test
 
-test: $(TEST)
+gcov_report: clean_test 
+ifeq ($(OS), Darwin)
+	$(CC) $(STDFLAGS) $(GCOV_FLAGS) ${TEST_SRC} ${SRC} -o test $(LIBS) -lm
+else
+	$(CC) $(STDFLAGS) $(GCOV_FLAGS) ${TEST_SRC} ${SRC} -o test $(LIBS) $(LINUX_FLAGS)
+endif
+	./test
+	lcov --capture --directory . --output-file coverage.info
+	genhtml coverage.info --output-directory gcov
+	$(OPEN_CMD) ./gcov/index.html
 
-$(TEST): clean 
-	$(CC) $(CFLAGS) $(SRC_TEST) $(SRC) -o $@ $(LDFLAGS) --coverage
-	@./$(TEST)
+clean_obj :
+	rm -f *.o
 
-gcov_report: $(LIB) test 
-	lcov -t "$(TEST)" -o $(TEST).info -c -d .	
-	genhtml -o report $(TEST).info
-	open ./report/index.html
+clean_test:
+	rm -rf *.gcda
+	rm -rf *.gcno
+	rm -rf *.info
+	rm -rf test
+	rm -rf gcov
+	rm -rf unit_test
 
-clean:
-	@rm -rf $(TEST) report
-	@rm -rf *.gcno *.gcda *.gcov *.o *.gcvo *.info *.a
-
-
-clean_lib:
-	@rm -rf $(LIB)
-
-style_check:
-	cppcheck --enable=all --suppress=missingIncludeSystem .
-	cp ../materials/linters/CPPLINT.cfg .
-	python3 ../materials/linters/cpplint.py --extensions=c *.c *.h
-	rm -rf CPPLINT.cfg
-
-valgrind_check:
-	@$(CC) $(SRC_TEST) $(LIB) -o $(TEST) $(LDFLAGS)
-	CK_FORK=no valgrind --leak-check=full ./$(TEST)
-	make clean 
+ clean : clean_obj clean_test
+	rm -f *.a
